@@ -10,8 +10,9 @@ export class UsdtToVnd extends Component {
     }
 }
 changeValue = (e) => {
-    const vnd = e.target.value * 23500;
-    console.log(vnd);
+  this.setState({
+    vnd : e.target.value * 23500
+  })
   }  
 render() {
 return (

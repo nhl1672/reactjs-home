@@ -1,9 +1,10 @@
 import './App.css';
-import ConvertCurrency from './Components/ConvertCurrency';
+import Lifecycle from './Components/Lifecycle/lifecycle';
+import 'bootstrap/dist/css/bootstrap.min.css';
 function App() {
   return (
     <div>
-      <ConvertCurrency/>
+      <Lifecycle/>
     </div>
   );
 }
