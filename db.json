@@ -5,55 +5,55 @@
       "name": "Hoàng An",
       "email": "hoangan.web@gmail.com",
       "phone": "0388875179",
-      "status": 0
+      "status": 1
     },
     {
       "id": 3,
       "name": "Nguyễn Văn C",
       "email": "nguyenvana@gmail.com",
       "phone": "0388875179",
-      "status": "1"
+      "status": 1
     },
     {
       "id": 4,
       "name": "Nguyễn Văn D",
       "email": "nguyenvand@gmail.com",
       "phone": "0388875179",
-      "status": "0"
+      "status": 1
     },
     {
       "name": "Hoàng An",
       "email": "hoangan.web@gmail.com",
       "phone": "0388875179",
-      "status": "0",
+      "status": 0,
       "id": 5
     },
     {
       "name": "Hoàng An",
       "email": "hoangan.web@gmail.com",
       "phone": "0388875179",
-      "status": "0",
+      "status": 0,
       "id": 6
     },
     {
       "name": "Hoàng An",
       "email": "hoangan.web@gmail.com",
       "phone": "0388875179",
-      "status": "0",
+      "status": 0,
       "id": 7
     },
     {
       "name": "Hoàng An",
       "email": "hoangan.web@gmail.com",
       "phone": "0388875179",
-      "status": "0",
+      "status": 0,
       "id": 8
     },
     {
       "name": "Hoàng An",
       "email": "hoangan.web@gmail.com",
       "phone": "0388875179",
-      "status": "0",
+      "status": 0,
       "id": 9
     }
   ]
