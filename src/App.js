@@ -1,11 +1,11 @@
 import './App.css';
-import Lifecycle from './Components/Lifecycle/lifecycle';
+import Customers from './Components/CRUD/Customers';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.min.js';
 function App() {
   return (
     <div>
-      <Lifecycle/>
+      <Customers/>
     </div>
   );
 }
