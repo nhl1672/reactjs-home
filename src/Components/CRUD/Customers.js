@@ -19,16 +19,42 @@ export class Customers extends Component {
 
     this.customerApi = config.SERVER_API + "/customers";
     this.perPage = 5;
+    const { SERVER_API } = config;
+    this.customerApi = `${SERVER_API}/customers`;
   }
-
   getCustomers = (filters= {}) => {
-    let searchApi = this.customerApi;
+    let searchApi;
+    if (this.state.filters.keyword !== "") {
+      searchApi =
+        this.customerApi +
+        "?_page=" +
+        this.state.paginate.currentPage +
+        "&_limit=" +
+        this.perPage +
+        "?q=" +
+        this.state.filters.keyword;
+    } else {
+      searchApi =
+        this.customerApi +
+        "?_page=" +
+        this.state.paginate.currentPage +
+        "&_limit=" +
+        this.perPage;
+    }
 
     if (Object.keys(filters).length) {
       const params = new URLSearchParams(filters).toString();
-      searchApi = this.customerApi + `?_page=${this.state.paginate.currentPage}&_limit=${this.perPage}` +`&`+ params ;
-      console.log(searchApi);
+      searchApi = 
+      this.customerApi +
+        "?" +
+        "_page=" +
+        this.state.paginate.currentPage +
+        "&_limit=" +
+        this.perPage +
+        "&" +
+        params;
     }
+    console.log(searchApi);
     fetch(searchApi)
       .then((response) => response.json())
       .then((customers) => {
@@ -37,10 +63,22 @@ export class Customers extends Component {
         });
       });
   };
-
+  setMaxPage = () => {
+    let customerApi = this.customerApi;
+    fetch(customerApi)
+      .then((response) => response.json())
+      .then((customers) => {
+        const maxPage = Math.ceil(customers.length / this.perPage);
+        const paginate = { ...this.state.paginate };
+        paginate.maxPage = maxPage;
+        this.setState({
+          paginate: paginate,
+        });
+      });
+  };
   componentDidMount = () => {
+    this.setMaxPage();
     this.getCustomers();
-    this.setMaxPages();
   };
 
   handleFilter = (e) => {
@@ -72,19 +110,6 @@ export class Customers extends Component {
     this.setState({
       filters: filters,
     });
-  };
-  setMaxPages = () => {
-    let customerApi = this.customerApi;
-    fetch(customerApi)
-      .then((response) => response.json())
-      .then((customers) => {
-        const maxPage = Math.ceil(customers.length / this.perPage);
-        const paginate = { ...this.state.paginate };
-        paginate.maxPage = maxPage;
-        this.setState({
-          paginate: paginate,
-        });
-      });
   };
   paginateRender = () => {
     let paginateItem = [];
@@ -142,49 +167,25 @@ export class Customers extends Component {
       }, 100);
     };
     prevPaginate = (e) => {
-        e.preventDefault();
-        let page = this.state.paginate.currentPage;
-        page = page - 1;
-        if (page < 0) {
-          page = 1;
-        }
-        this.clickPaginate(page);
-      };
-      nextPaginate = (e) => {
-        e.preventDefault();
-        let page = this.state.paginate.currentPage;
-        page = page + 1;
-        if (page > this.state.paginate.maxPage) {
-          page = this.state.paginate.maxPage;
-        }
-        this.clickPaginate(page);
-      };
-      customersRender = () => {
-        if (this.state.isLoading) {
-          return (
-            <tr>
-              <td colSpan={6}>
-                <div className="alert alert-success text-center">
-                  Đang tải dữ liệu...
-                </div>
-              </td>
-            </tr>
-          );
-        }
-        return this.state.customers.map((customer) => {
-          return (
-            <tr key={customer.id}>
-              <td>{customer.name}</td>
-              <td>{customer.email}</td>
-              <td>{customer.phone}</td>
-            </tr>
-          );
-        });
-      };
+      e.preventDefault();
+      let page = this.state.paginate.currentPage;
+      page = page - 1;
+      if (page < 0) {
+        page = 1;
+      }
+      this.clickPaginate(page);
+    };
+    nextPaginate = (e) => {
+      e.preventDefault();
+      let page = this.state.paginate.currentPage;
+      page = page + 1;
+      if (page > this.state.paginate.maxPage) {
+        page = this.state.paginate.maxPage;
+      }
+      this.clickPaginate(page);
+    };
   render() {
     const { customers } = this.state;
-    const page = customers.length / 5;
-    const pageFixed = Math.round(page);
     const jsx = customers.map(({ id, name, email, phone, status }, index) => {
       const statusBtn = status ? (
         <button type="button" className="btn btn-success">
