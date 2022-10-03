@@ -1,89 +1,172 @@
 import React, { Component } from "react";
 import config from "./config.json";
+import HttpClient from "./HttpClient";
+import Button from 'react-bootstrap/Button';
+import Modal from 'react-bootstrap/Modal';
 export class Customers extends Component {
   constructor(props) {
     super(props);
-
     this.state = {
       customers: [],
-      isLoading: true,
       filters: {
         status: "all",
         keyword: "",
       },
       paginate: {
-        maxPage: 0,
         currentPage: 1,
+        totalPage: 0,
       },
+      show: true,
     };
-
     this.customerApi = config.SERVER_API + "/customers";
-    this.perPage = 5;
-    const { SERVER_API } = config;
-    this.customerApi = `${SERVER_API}/customers`;
+    this.perPage = config.PER_PAGE;
+    this.client = new HttpClient();
   }
-  getCustomers = (filters= {}) => {
-    let searchApi;
-    if (this.state.filters.keyword !== "") {
-      searchApi =
-        this.customerApi +
-        "?_page=" +
-        this.state.paginate.currentPage +
-        "&_limit=" +
-        this.perPage +
-        "?q=" +
-        this.state.filters.keyword;
-    } else {
-      searchApi =
-        this.customerApi +
-        "?_page=" +
-        this.state.paginate.currentPage +
-        "&_limit=" +
-        this.perPage;
-    }
+  getCustomers = async (filters = {}) => {
+    const { currentPage } = this.state.paginate;
+
+    let searchApi = `${this.customerApi}?_page=${currentPage}&_limit=${this.perPage}`;
 
     if (Object.keys(filters).length) {
       const params = new URLSearchParams(filters).toString();
-      searchApi = 
-      this.customerApi +
-        "?" +
-        "_page=" +
-        this.state.paginate.currentPage +
-        "&_limit=" +
-        this.perPage +
-        "&" +
-        params;
+
+      searchApi = `${this.customerApi}?_page=${currentPage}&_limit=${this.perPage}&${params}`;
     }
     console.log(searchApi);
-    fetch(searchApi)
-      .then((response) => response.json())
-      .then((customers) => {
-        this.setState({
-          customers: customers,
-        });
+    const clientResult = await this.client.get(searchApi);
+
+    const totalCount = clientResult.headers.get("x-total-count");
+
+    const totalPage = Math.ceil(totalCount / this.perPage);
+
+    const paginate = { ...this.state.paginate };
+    paginate.totalPage = totalPage;
+
+    clientResult.json().then((customers) => {
+      this.setState({
+        customers: customers,
+        paginate: paginate,
       });
+    });
   };
-  setMaxPage = () => {
-    let customerApi = this.customerApi;
-    fetch(customerApi)
-      .then((response) => response.json())
-      .then((customers) => {
-        const maxPage = Math.ceil(customers.length / this.perPage);
-        const paginate = { ...this.state.paginate };
-        paginate.maxPage = maxPage;
-        this.setState({
-          paginate: paginate,
-        });
-      });
+  renderPaginate = () => {
+    const { totalPage, currentPage } = this.state.paginate;
+
+    let pageItemJsx = [];
+
+    for (let i = 1; i < totalPage; i++) {
+      pageItemJsx.push(
+        <li
+          key={i}
+          className={`page-item${currentPage === i ? " active" : null}`}
+        >
+          <a
+            className="page-link"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              this.goPaginate(i);
+            }}
+          >
+            {i}
+          </a>
+        </li>
+      );
+    }
+    const jsx = (
+      <nav className="d-flex justify-content-end">
+      <ul className="pagination">
+        <li className="page-item">
+          <a className="page-link" href="#">
+            Trước
+          </a>
+        </li>
+        {pageItemJsx}
+        <li className="page-item">
+          <a className="page-link" href="#">
+            Sau
+          </a>
+        </li>
+      </ul>
+    </nav>
+    );
+    if(totalPage - 1 > 1){
+      return jsx;
+    }
   };
+  updateCurrentPage = (paginate) => {
+    this.setState({
+      paginate: paginate,
+    });
+  };
+
+  // goPaginate = async (page) => {
+  //   const paginate = {...this.state.paginate};
+  //   paginate.currentPage = page;
+
+  //   await this.updateCurrentPage(paginate);
+
+  //   // await (() => {
+  //   //   this.setState({
+  //   //     paginate: paginate
+  //   //   })
+  //   // })()
+
+  //   this.getCustomers();
+  // }
+
+  goPaginate = (page) => {
+    const paginate = { ...this.state.paginate };
+    paginate.currentPage = page;
+
+    this.setState({
+      paginate: paginate,
+    });
+  };
+
   componentDidMount = () => {
-    this.setMaxPage();
-    this.getCustomers();
+    const filtersObj = this.getFilterObj();
+    this.getCustomers(filtersObj);
   };
 
-  handleFilter = (e) => {
-    e.preventDefault();
+  componentDidUpdate = (prevProps, prevState) => {
+    const { currentPage: prevCurrentPage } = prevState.paginate;
 
+    const { currentPage } = this.state.paginate;
+
+    if (currentPage != prevCurrentPage) {
+      const filtersObj = this.getFilterObj();
+
+      this.getCustomers(filtersObj);
+    }
+    // console.log('Update...');
+    //Đặc biệt lưu ý phải check prevState và currentState => Nếu khác nhau thì sẽ gọi API
+  };
+  modalAddUser = () => {
+    const [show, setShow] = useState(false);
+
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
+    return (
+      <>
+      <Modal show={show} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Modal heading</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleClose}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      </>
+    )
+  }
+  getFilterObj = () => {
     const { filters } = this.state;
 
     let { status, keyword } = filters;
@@ -100,6 +183,13 @@ export class Customers extends Component {
       filtersObj.q = keyword;
     }
 
+    return filtersObj;
+  };
+
+  handleFilter = (e) => {
+    e.preventDefault();
+    const filtersObj = this.getFilterObj();
+
     this.getCustomers(filtersObj);
   };
 
@@ -111,81 +201,11 @@ export class Customers extends Component {
       filters: filters,
     });
   };
-  paginateRender = () => {
-    let paginateItem = [];
-    let active;
-    const currentPage = this.state.paginate.currentPage;
-    for (let page = 1; page <= this.state.paginate.maxPage; page++) {
-      active = parseInt(page) === parseInt(currentPage);
-      paginateItem.push(
-        <li
-          key={page}
-          onClick={(e) => {
-            e.preventDefault();
-            this.clickPaginate(page);
-          }}
-        >
-          <p className="page-link">{page}</p>
-        </li>
-      );
-    }
-    return (
-      <nav aria-label="...">
-        <ul className="pagination">
-          {this.state.paginate.currentPage > 1 ? (
-            <li className="page-item disabled">
-              <a className="page-link" href="#" tabIndex={-1}>
-                Previous
-              </a>
-            </li>
-          ) : (
-            false
-          )}
-          {paginateItem}
-          {this.state.paginate.currentPage < this.state.paginate.maxPage ? (
-            <li className="page-item">
-              <a className="page-link" href="#">
-                Next
-              </a>
-            </li>
-          ) : (
-            false
-          )}
-        </ul>
-      </nav>
-    );
-  };
-  clickPaginate = (page) => {
-    const paginate = { ...this.state.paginate };
-    paginate.currentPage = page;
-    this.setState({
-      paginate: paginate,
-      isLoading: true,
-    });
-    setTimeout(() => {
-        this.getCustomers();
-      }, 100);
-    };
-    prevPaginate = (e) => {
-      e.preventDefault();
-      let page = this.state.paginate.currentPage;
-      page = page - 1;
-      if (page < 0) {
-        page = 1;
-      }
-      this.clickPaginate(page);
-    };
-    nextPaginate = (e) => {
-      e.preventDefault();
-      let page = this.state.paginate.currentPage;
-      page = page + 1;
-      if (page > this.state.paginate.maxPage) {
-        page = this.state.paginate.maxPage;
-      }
-      this.clickPaginate(page);
-    };
+
   render() {
+    // console.log("re-render 2");
     const { customers } = this.state;
+
     const jsx = customers.map(({ id, name, email, phone, status }, index) => {
       const statusBtn = status ? (
         <button type="button" className="btn btn-success">
@@ -225,6 +245,8 @@ export class Customers extends Component {
     return (
       <div className="container">
         <h1>Danh sách khách hàng</h1>
+        <a href="" className="btn btn-primary">Thêm mới</a>
+        <hr/>
         <form onSubmit={this.handleFilter}>
           <div className="row">
             <div className="col-3">
@@ -271,10 +293,11 @@ export class Customers extends Component {
           </thead>
           <tbody>{jsx}</tbody>
         </table>
-        {this.paginateRender()}
+        {this.renderPaginate()}
       </div>
     );
   }
 }
+
 
 export default Customers;
